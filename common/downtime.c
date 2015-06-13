@@ -57,6 +57,20 @@ extern timed_event *event_list_high_tail;
 
 #ifdef NSCORE
 
+static inline
+void log_downtime_event(scheduled_downtime *dt, const char *event) {
+	if (dt->type == HOST_DOWNTIME)
+		logit(NSLOG_INFO_MESSAGE, FALSE,
+		      "HOST DOWNTIME EVENT: %lu;%lu;%s;%lu;%lu;%lu;%d;%s;%s;%s",
+		      dt->downtime_id, dt->entry_time, dt->host_name, dt->start_time, dt->end_time, dt->duration,
+		      dt->fixed, event, dt->author ? dt->author : "", dt->comment ? dt->comment : "");
+	else
+		logit(NSLOG_INFO_MESSAGE, FALSE,
+		      "SERVICE DOWNTIME EVENT: %lu;%lu;%s;%s;%lu;%lu;%lu;%d;%s;%s;%s",
+		      dt->downtime_id, dt->entry_time, dt->host_name, dt->service_description, dt->start_time, dt->end_time, dt->duration,
+		      dt->fixed, event, dt->author ? dt->author : "", dt->comment ? dt->comment : "");
+}
+
 /******************************************************************/
 /**************** INITIALIZATION/CLEANUP FUNCTIONS ****************/
 /******************************************************************/
@@ -144,6 +158,8 @@ int unschedule_downtime(int type,unsigned long downtime_id){
 		if((svc=find_service(temp_downtime->host_name,temp_downtime->service_description))==NULL)
 			return ERROR;
 	        }
+
+	log_downtime_event(temp_downtime, "CANCELLED");
 
 	/* decrement pending flex downtime if necessary ... */
 	if(temp_downtime->fixed==FALSE && temp_downtime->incremented_pending_downtime==TRUE){
@@ -323,6 +339,8 @@ int register_downtime(int type, unsigned long downtime_id){
 		}
 #endif
 
+	log_downtime_event(temp_downtime, "SCHEDULED");
+
 	return OK;
         }
 
@@ -397,6 +415,7 @@ int handle_scheduled_downtime(scheduled_downtime *temp_downtime){
 
 	/* have we come to the end of the scheduled downtime? */
 	if(temp_downtime->is_in_effect==TRUE){
+		log_downtime_event(temp_downtime, "STOPPED");
 
 #ifdef USE_EVENT_BROKER
 		/* send data to event broker */
@@ -475,6 +494,7 @@ int handle_scheduled_downtime(scheduled_downtime *temp_downtime){
 
 	/* else we are just starting the scheduled downtime */
 	else{
+		log_downtime_event(temp_downtime, "STARTED");
 
 #ifdef USE_EVENT_BROKER
 		/* send data to event broker */
