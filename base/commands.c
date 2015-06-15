@@ -3227,6 +3227,7 @@ int cmd_change_object_char_var(int cmd,char *args){
 
 /* changes a custom host or service variable */
 int cmd_change_object_custom_var(int cmd, char *args){
+	int retval = ERROR;
 	host *temp_host=NULL;
 	service *temp_service=NULL;
 	contact *temp_contact=NULL;
@@ -3240,60 +3241,45 @@ int cmd_change_object_custom_var(int cmd, char *args){
 
 	/* get the host or contact name */
 	if((temp_ptr=my_strtok(args,";"))==NULL)
-		return ERROR;
+		goto free_and_return;
 	if((name1=(char *)strdup(temp_ptr))==NULL)
-		return ERROR;
+		goto free_and_return;
 
 	/* get the service description if necessary */
 	if(cmd==CMD_CHANGE_CUSTOM_SVC_VAR){
-		if((temp_ptr=my_strtok(NULL,";"))==NULL){
-			my_free(name1);
-			return ERROR;
-		        }
-		if((name2=(char *)strdup(temp_ptr))==NULL){
-			my_free(name1);
-			return ERROR;
-		        }
+		if((temp_ptr=my_strtok(NULL,";"))==NULL)
+			goto free_and_return;
+		if((name2=(char *)strdup(temp_ptr))==NULL)
+			goto free_and_return;
 	        }
 
 	/* get the custom variable name */
-	if((temp_ptr=my_strtok(NULL,";"))==NULL){
-		my_free(name1);
-		my_free(name2);
-		return ERROR;
-	        }
-	if((varname=(char *)strdup(temp_ptr))==NULL){
-		my_free(name1);
-		my_free(name2);
-		return ERROR;
-	        }
+	if((temp_ptr=my_strtok(NULL,";"))==NULL)
+		goto free_and_return;
+	if((varname=(char *)strdup(temp_ptr))==NULL)
+		goto free_and_return;
 
 	/* get the custom variable value */
-	if((temp_ptr=my_strtok(NULL,";"))==NULL){
-		my_free(name1);
-		my_free(name2);
-		my_free(varname);
-		return ERROR;
-	        }
-	if((varvalue=(char *)strdup(temp_ptr))==NULL){
-		my_free(name1);
-		my_free(name2);
-		my_free(varname);
-		return ERROR;
-	        }
+	if((temp_ptr=my_strtok(NULL,";"))==NULL)
+		goto free_and_return;
+	if((varvalue=(char *)strdup(temp_ptr))==NULL)
+		goto free_and_return;
 
 	/* find the object */
 	switch(cmd){
 	case CMD_CHANGE_CUSTOM_HOST_VAR:
-		temp_host=find_host(name1);
+		if ((temp_host=find_host(name1)) == NULL)
+			goto free_and_return;
 		temp_customvariablesmember=temp_host->custom_variables;
 		break;
 	case CMD_CHANGE_CUSTOM_SVC_VAR:
-		temp_service=find_service(name1,name2);
+		if ((temp_service=find_service(name1,name2)) == NULL)
+			goto free_and_return;
 		temp_customvariablesmember=temp_service->custom_variables;
 		break;
 	case CMD_CHANGE_CUSTOM_CONTACT_VAR:
-		temp_contact=find_contact(name1);
+		if ((temp_contact=find_contact(name1)) == NULL)
+			goto free_and_return;
 		temp_customvariablesmember=temp_contact->custom_variables;
 		break;
 	default:
@@ -3322,12 +3308,6 @@ int cmd_change_object_custom_var(int cmd, char *args){
 		        }
 	        }
 
-	/* free memory */
-	my_free(name1);
-	my_free(name2);
-	my_free(varname);
-	my_free(varvalue);
-
 	/* set the modified attributes and update the status of the object */
 	switch(cmd){
 	case CMD_CHANGE_CUSTOM_HOST_VAR:
@@ -3346,7 +3326,14 @@ int cmd_change_object_custom_var(int cmd, char *args){
 		break;
 	        }
 
-	return OK;
+	retval = OK;
+
+free_and_return:
+	my_free(name1);
+	my_free(name2);
+	my_free(varname);
+	my_free(varvalue);
+	return retval;
         }
 	
 
