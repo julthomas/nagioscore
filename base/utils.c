@@ -147,6 +147,7 @@ extern int      check_host_freshness;
 extern int      auto_reschedule_checks;
 
 extern int      additional_freshness_latency;
+extern int      delay_freshness_checks_after_program_start;
 
 extern int      check_for_updates;
 extern int      bare_update_check;
@@ -4867,6 +4868,7 @@ int reset_variables(void){
 	child_processes_fork_twice=-1;
 
 	additional_freshness_latency=DEFAULT_ADDITIONAL_FRESHNESS_LATENCY;
+	delay_freshness_checks_after_program_start=DEFAULT_DELAY_FRESHNESS_CHECKS_AFTER_PROGRAM_START;
 
         enable_embedded_perl=DEFAULT_ENABLE_EMBEDDED_PERL;
 	use_embedded_perl_implicitly=DEFAULT_USE_EMBEDDED_PERL_IMPLICITLY;

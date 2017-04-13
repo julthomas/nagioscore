@@ -121,6 +121,7 @@ extern int      check_host_freshness;
 extern int      auto_reschedule_checks;
 
 extern int      additional_freshness_latency;
+extern int      delay_freshness_checks_after_program_start;
 
 extern int      check_for_updates;
 extern int      bare_update_check;
@@ -657,6 +658,9 @@ int read_main_config_file(char *main_config_file){
 
 		else if(!strcmp(variable,"additional_freshness_latency"))
 			additional_freshness_latency=atoi(value);
+
+		else if(!strcmp(variable,"delay_freshness_checks_after_program_start"))
+			delay_freshness_checks_after_program_start=atoi(value);
 
 		else if(!strcmp(variable,"retained_host_attribute_mask"))
 			retained_host_attribute_mask=strtoul(value,NULL,0);

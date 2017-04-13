@@ -130,6 +130,7 @@ int             auto_reschedule_checks=DEFAULT_AUTO_RESCHEDULE_CHECKS;
 int             auto_rescheduling_window=DEFAULT_AUTO_RESCHEDULING_WINDOW;
 
 int             additional_freshness_latency=DEFAULT_ADDITIONAL_FRESHNESS_LATENCY;
+int             delay_freshness_checks_after_program_start=DEFAULT_DELAY_FRESHNESS_CHECKS_AFTER_PROGRAM_START;
 
 int             check_for_updates=DEFAULT_CHECK_FOR_UPDATES;
 int             bare_update_check=DEFAULT_BARE_UPDATE_CHECK;
