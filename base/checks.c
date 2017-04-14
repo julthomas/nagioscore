@@ -2060,6 +2060,8 @@ int is_service_result_fresh(service *temp_service, time_t current_time, int log_
 			freshness_threshold=(temp_service->check_interval*interval_length)+temp_service->latency+additional_freshness_latency;
 		else
 			freshness_threshold=(temp_service->retry_interval*interval_length)+temp_service->latency+additional_freshness_latency;
+
+		freshness_threshold += (temp_service->check_interval * interval_length);
 		}
 	else
 		freshness_threshold=temp_service->freshness_threshold;
@@ -2463,7 +2465,7 @@ int is_host_result_fresh(host *temp_host, time_t current_time, int log_this){
 
 	/* use user-supplied freshness threshold or auto-calculate a freshness threshold to use? */
 	if(temp_host->freshness_threshold==0)
-		freshness_threshold=(temp_host->check_interval*interval_length)+temp_host->latency+additional_freshness_latency;
+		freshness_threshold=(temp_host->check_interval*interval_length*2)+temp_host->latency+additional_freshness_latency;
 	else
 		freshness_threshold=temp_host->freshness_threshold;
 
