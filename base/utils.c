@@ -2230,12 +2230,14 @@ int move_check_result_to_queue(char *checkresult_file){
 	mode_t new_umask=077;
 	mode_t old_umask;
 	int result=0;
+	struct timeval t;
 
 	/* save the file creation mask */
 	old_umask=umask(new_umask);
 
 	/* create a safe temp file */
-	asprintf(&output_file,"%s/cXXXXXX",check_result_path);
+	gettimeofday(&t,NULL);
+	asprintf(&output_file,"%s/c.%lu.%06lu.XXXXXX",check_result_path,t.tv_sec,t.tv_usec);
 	output_file_fd=mkstemp(output_file);
 
 	/* file created okay */
@@ -2284,6 +2286,9 @@ int move_check_result_to_queue(char *checkresult_file){
 	}
 
 
+static int cmpstringp(const void *p1, const void *p2) {
+	return strcmp(* (char * const *) p1, * (char * const *) p2);
+}
 
 /* processes files in the check result queue directory */
 int process_check_result_queue(char *dirname){
@@ -2310,6 +2315,9 @@ int process_check_result_queue(char *dirname){
 
 	log_debug_info(DEBUGL_CHECKS,1,"Starting to read check result queue '%s'...\n",dirname);
 
+	char **files = NULL;
+	int i_file = 0;
+
 	/* process all files in the directory... */
 	while((dirfile=readdir(dirp))!=NULL){
 
@@ -2319,7 +2327,7 @@ int process_check_result_queue(char *dirname){
 
 		/* process this if it's a check result file... */
 		x=strlen(dirfile->d_name);
-		if(x==7 && dirfile->d_name[0]=='c'){
+		if(x>=7 && dirfile->d_name[0]=='c' && dirfile->d_name[1]=='.'){
 
 			if(stat(file,&stat_buf)==-1){
 				logit(NSLOG_RUNTIME_WARNING,TRUE,"Warning: Could not stat() check result file '%s'.\n",file);
@@ -2341,22 +2349,37 @@ int process_check_result_queue(char *dirname){
 				}
 
 			/* at this point we have a regular file... */
+			files = realloc(files, (i_file + 1) * sizeof(char*));
+			files[i_file] = malloc(strlen(file)+1);
+			strcpy(files[i_file], file);
+			i_file++;
+		}
+	}
 
+	if (files != NULL) {
+		qsort(files, i_file, sizeof(char *), cmpstringp);
+
+		int i;
+		for (i = 0; i < i_file; i++) {
 			/* can we find the associated ok-to-go file ? */
-			asprintf(&temp_buffer,"%s.ok",file);
+			asprintf(&temp_buffer,"%s.ok",files[i]);
 			result=stat(temp_buffer,&ok_stat_buf);
 			my_free(temp_buffer);
 			if(result==-1)
 				continue;
 
 			/* process the file */
-			result=process_check_result_file(file);
+			result=process_check_result_file(files[i]);
 
 			/* break out if we encountered an error */
 			if(result==ERROR)
 				break;
-		        }
 		}
+
+		for (i = 0; i < i_file; i++)
+			free(files[i]);
+		free(files);
+	}
 
 	closedir(dirp);
 
